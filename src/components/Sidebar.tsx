@@ -7,10 +7,13 @@ import {
   Settings, 
   LogOut,
   Scissors,
-  Clock
+  Clock,
+  Package,
+  ShoppingCart
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppData } from '@/contexts/AppDataContext';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -19,12 +22,15 @@ const navigation = [
   { name: 'Agendamentos', href: '/appointments', icon: Calendar },
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Serviços', href: '/services', icon: Scissors },
+  { name: 'Estoque', href: '/inventory', icon: Package },
   { name: 'Relatórios', href: '/reports', icon: BarChart3 },
+  { name: 'Relatório Produtos', href: '/product-reports', icon: ShoppingCart },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const { user, logout } = useAuth();
+  const { settings } = useAppData();
   const location = useLocation();
 
   return (
@@ -32,7 +38,7 @@ export function Sidebar() {
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-20 items-center px-6 border-b border-sidebar-border">
-          <Logo size="sm" />
+          <Logo size="sm" shopName={settings.shopName} />
         </div>
 
         {/* Navigation */}

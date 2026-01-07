@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search, Phone, Mail, Calendar } from 'lucide-react';
+import { Plus, Search, Phone, Mail } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { MOCK_CLIENTS, MOCK_APPOINTMENTS } from '@/data/mockData';
+import { useAppData } from '@/contexts/AppDataContext';
 import { Client } from '@/types';
 import {
   Dialog,
@@ -14,9 +14,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { formatPhone, isValidPhone, isValidEmail, validationMessages } from '@/lib/validation';
 
 export default function Clients() {
-  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
+  const { clients, addClient, appointments } = useAppData();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -25,12 +26,59 @@ export default function Clients() {
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  const resetForm = () => {
+    setNewName('');
+    setNewPhone('');
+    setNewEmail('');
+    setPhoneError('');
+    setEmailError('');
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhone(value);
+    setNewPhone(formatted);
+    if (formatted && !isValidPhone(formatted)) {
+      setPhoneError(validationMessages.phone);
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setNewEmail(value);
+    if (value && !isValidEmail(value)) {
+      setEmailError(validationMessages.email);
+    } else {
+      setEmailError('');
+    }
+  };
 
   const handleCreateClient = () => {
-    if (!newName || !newPhone) {
+    if (!newName.trim()) {
       toast({
         title: 'Erro',
-        description: 'Nome e telefone são obrigatórios.',
+        description: 'Nome é obrigatório.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!newPhone || !isValidPhone(newPhone)) {
+      toast({
+        title: 'Erro',
+        description: validationMessages.phone,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newEmail && !isValidEmail(newEmail)) {
+      toast({
+        title: 'Erro',
+        description: validationMessages.email,
         variant: 'destructive',
       });
       return;
@@ -38,17 +86,15 @@ export default function Clients() {
 
     const newClient: Client = {
       id: Date.now().toString(),
-      name: newName,
+      name: newName.trim(),
       phone: newPhone,
-      email: newEmail || undefined,
+      email: newEmail.trim() || undefined,
       createdAt: new Date(),
     };
 
-    setClients(prev => [...prev, newClient]);
+    addClient(newClient);
     setIsDialogOpen(false);
-    setNewName('');
-    setNewPhone('');
-    setNewEmail('');
+    resetForm();
     
     toast({
       title: 'Cliente cadastrado',
@@ -57,7 +103,7 @@ export default function Clients() {
   };
 
   const getClientStats = (clientId: string) => {
-    const clientAppointments = MOCK_APPOINTMENTS.filter(
+    const clientAppointments = appointments.filter(
       apt => apt.clientId === clientId
     );
     const totalSpent = clientAppointments
@@ -87,7 +133,10 @@ export default function Clients() {
               Gerencie o cadastro de clientes da barbearia
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button variant="gold" size="lg">
                 <Plus className="w-5 h-5 mr-2" />
@@ -112,10 +161,14 @@ export default function Clients() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Telefone *</label>
                   <Input
-                    placeholder="(11) 99999-9999"
+                    placeholder="(99) 99999-9999"
                     value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    maxLength={15}
                   />
+                  {phoneError && (
+                    <p className="text-xs text-destructive">{phoneError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
@@ -123,8 +176,11 @@ export default function Clients() {
                     type="email"
                     placeholder="email@exemplo.com"
                     value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                   />
+                  {emailError && (
+                    <p className="text-xs text-destructive">{emailError}</p>
+                  )}
                 </div>
                 <Button variant="gold" className="w-full" onClick={handleCreateClient}>
                   Cadastrar Cliente

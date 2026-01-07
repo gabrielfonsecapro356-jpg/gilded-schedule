@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Users, 
   Scissors, 
   TrendingUp, 
   Clock,
-  ArrowRight
+  ArrowRight,
+  UserPlus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
@@ -13,21 +13,20 @@ import { StatCard } from '@/components/StatCard';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MOCK_APPOINTMENTS, getAppointmentsByDate, SERVICES } from '@/data/mockData';
+import { ClientFormDialog } from '@/components/ClientFormDialog';
+import { useAppData } from '@/contexts/AppDataContext';
 import { Appointment } from '@/types';
 
 export default function Dashboard() {
-  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+  const { services, appointments, updateAppointment, settings } = useAppData();
   const today = new Date();
 
-  useEffect(() => {
-    setTodayAppointments(getAppointmentsByDate(today));
-  }, []);
+  const todayAppointments = appointments.filter(
+    apt => apt.date.toDateString() === today.toDateString()
+  ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const handleStatusChange = (id: string, status: Appointment['status']) => {
-    setTodayAppointments(prev =>
-      prev.map(apt => apt.id === id ? { ...apt, status } : apt)
-    );
+    updateAppointment(id, { status });
   };
 
   const completedToday = todayAppointments.filter(a => a.status === 'completed').length;
@@ -57,13 +56,26 @@ export default function Dashboard() {
                 day: 'numeric' 
               })}
             </p>
+            <p className="text-sm text-primary mt-1">
+              {settings.shopName} • {settings.openTime} - {settings.closeTime}
+            </p>
           </div>
-          <Link to="/appointments">
-            <Button variant="gold" size="lg">
-              <Calendar className="w-5 h-5 mr-2" />
-              Novo Agendamento
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <ClientFormDialog 
+              trigger={
+                <Button variant="outline" size="lg">
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Novo Cliente
+                </Button>
+              }
+            />
+            <Link to="/appointments">
+              <Button variant="gold" size="lg">
+                <Calendar className="w-5 h-5 mr-2" />
+                Novo Agendamento
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -90,7 +102,7 @@ export default function Dashboard() {
           />
           <StatCard
             title="Serviços Oferecidos"
-            value={SERVICES.length}
+            value={services.length}
             subtitle="tipos disponíveis"
             icon={<Scissors className="w-6 h-6 text-primary" />}
           />
@@ -181,7 +193,7 @@ export default function Dashboard() {
                 <CardTitle className="text-lg">Serviços Mais Populares</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {SERVICES.slice(0, 4).map((service, index) => (
+                {services.slice(0, 4).map((service, index) => (
                   <div key={service.id} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center text-primary-foreground font-bold text-sm">
                       {index + 1}

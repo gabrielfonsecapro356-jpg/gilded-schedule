@@ -4,7 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { SERVICES } from '@/data/mockData';
+import { useAppData } from '@/contexts/AppDataContext';
 import { Service } from '@/types';
 import {
   Dialog,
@@ -16,7 +16,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 export default function Services() {
-  const [services, setServices] = useState<Service[]>(SERVICES);
+  const { services, addService, updateService, deleteService } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const { toast } = useToast();
@@ -52,13 +52,11 @@ export default function Services() {
     }
 
     if (editingService) {
-      setServices(prev =>
-        prev.map(s =>
-          s.id === editingService.id
-            ? { ...s, name, duration: parseInt(duration), price: parseFloat(price) }
-            : s
-        )
-      );
+      updateService(editingService.id, {
+        name,
+        duration: parseInt(duration),
+        price: parseFloat(price),
+      });
       toast({
         title: 'Serviço atualizado',
         description: `${name} foi atualizado com sucesso.`,
@@ -70,7 +68,7 @@ export default function Services() {
         duration: parseInt(duration),
         price: parseFloat(price),
       };
-      setServices(prev => [...prev, newService]);
+      addService(newService);
       toast({
         title: 'Serviço criado',
         description: `${name} foi adicionado com sucesso.`,
@@ -82,7 +80,7 @@ export default function Services() {
   };
 
   const handleDelete = (service: Service) => {
-    setServices(prev => prev.filter(s => s.id !== service.id));
+    deleteService(service.id);
     toast({
       title: 'Serviço removido',
       description: `${service.name} foi removido.`,

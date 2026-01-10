@@ -1,12 +1,15 @@
 import { Service, Appointment, Client } from '@/types';
 
 export const SERVICES: Service[] = [
-  { id: '1', name: 'Corte de Cabelo', duration: 45, price: 50 },
-  { id: '2', name: 'Barba', duration: 30, price: 35 },
-  { id: '3', name: 'Sobrancelha', duration: 15, price: 20 },
-  { id: '4', name: 'Corte + Barba', duration: 75, price: 75 },
-  { id: '5', name: 'Corte Degradê', duration: 60, price: 60 },
-  { id: '6', name: 'Hidratação', duration: 30, price: 40 },
+  { id: '1', name: 'Corte Masculino', duration: 45, price: 40 },
+  { id: '2', name: 'Corte Feminino', duration: 60, price: 40 },
+  { id: '3', name: 'Sobrancelhas', duration: 15, price: 20 },
+  { id: '4', name: 'Pezinho', duration: 15, price: 20 },
+  { id: '5', name: 'Selagem', duration: 90, price: 60 },
+  { id: '6', name: 'Progressiva', duration: 120, price: 60 },
+  { id: '7', name: 'Alisamento', duration: 60, price: 30 },
+  { id: '8', name: 'Tintura', duration: 75, price: 45 },
+  { id: '9', name: 'Corte Feminino Completo', duration: 90, price: 70 },
 ];
 
 export const MOCK_CLIENTS: Client[] = [

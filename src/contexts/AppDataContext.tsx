@@ -55,14 +55,15 @@ interface AppDataContextType {
 }
 
 const INITIAL_PRODUCTS: Product[] = [
-  { id: '1', name: 'Gel Fixador Forte', category: 'Gel', price: 35, cost: 15, stock: 20, minStock: 5, soldCount: 45 },
-  { id: '2', name: 'Pomada Modeladora', category: 'Pomada', price: 45, cost: 20, stock: 15, minStock: 5, soldCount: 38 },
-  { id: '3', name: 'Shampoo Anticaspa', category: 'Shampoo', price: 28, cost: 12, stock: 25, minStock: 8, soldCount: 60 },
-  { id: '4', name: 'Loção Pós Barba', category: 'Loção', price: 40, cost: 18, stock: 12, minStock: 4, soldCount: 32 },
-  { id: '5', name: 'Perfume Masculino', category: 'Perfume', price: 120, cost: 55, stock: 8, minStock: 3, soldCount: 20 },
-  { id: '6', name: 'Creme Hidratante', category: 'Creme', price: 32, cost: 14, stock: 18, minStock: 6, soldCount: 28 },
-  { id: '7', name: 'Pente Profissional', category: 'Pente', price: 25, cost: 8, stock: 30, minStock: 10, soldCount: 15 },
-  { id: '8', name: 'Óleo para Barba', category: 'Óleo', price: 55, cost: 25, stock: 10, minStock: 4, soldCount: 42 },
+  { id: '1', name: 'Minoxidil', category: 'Tratamento', price: 120, cost: 60, stock: 15, minStock: 5, soldCount: 25 },
+  { id: '2', name: 'Gel', category: 'Gel', price: 30, cost: 12, stock: 25, minStock: 8, soldCount: 45 },
+  { id: '3', name: 'Shampoo', category: 'Shampoo', price: 30, cost: 12, stock: 20, minStock: 6, soldCount: 38 },
+  { id: '4', name: 'Shampoo Anticaspa', category: 'Shampoo', price: 35, cost: 15, stock: 18, minStock: 6, soldCount: 32 },
+  { id: '5', name: 'Pasta Modeladora', category: 'Pomada', price: 35, cost: 14, stock: 20, minStock: 5, soldCount: 28 },
+  { id: '6', name: 'Pasta Modeladora Premium', category: 'Pomada', price: 45, cost: 20, stock: 15, minStock: 5, soldCount: 22 },
+  { id: '7', name: 'Spray', category: 'Spray', price: 45, cost: 18, stock: 12, minStock: 4, soldCount: 18 },
+  { id: '8', name: 'Pente de Bolso', category: 'Pente', price: 10, cost: 4, stock: 40, minStock: 10, soldCount: 55 },
+  { id: '9', name: 'Shampoo para Barba', category: 'Barba', price: 35, cost: 15, stock: 18, minStock: 5, soldCount: 30 },
 ];
 
 const INITIAL_SETTINGS: BusinessSettings = {

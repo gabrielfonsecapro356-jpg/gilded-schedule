@@ -3,9 +3,10 @@ import { Scissors } from 'lucide-react';
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
+  shopName?: string;
 }
 
-export function Logo({ size = 'md', showText = true }: LogoProps) {
+export function Logo({ size = 'md', showText = true, shopName = 'BarberPro' }: LogoProps) {
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
@@ -21,15 +22,15 @@ export function Logo({ size = 'md', showText = true }: LogoProps) {
   return (
     <div className="flex items-center gap-3">
       <div className={`${sizeClasses[size]} relative`}>
-        <div className="absolute inset-0 bg-gradient-gold rounded-full opacity-20 blur-lg" />
-        <div className="relative w-full h-full bg-gradient-gold rounded-full flex items-center justify-center shadow-gold">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-full opacity-20 blur-lg" />
+        <div className="relative w-full h-full bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-[0_4px_30px_-5px_hsl(43_74%_52%_/_0.25)]">
           <Scissors className="w-1/2 h-1/2 text-primary-foreground rotate-[-45deg]" />
         </div>
       </div>
       {showText && (
         <div className="flex flex-col">
-          <span className={`font-heading font-bold ${textSizeClasses[size]} text-gradient-gold`}>
-            BarberPro
+          <span className={`font-heading font-bold ${textSizeClasses[size]} bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent`}>
+            {shopName}
           </span>
           <span className="text-xs text-muted-foreground tracking-widest uppercase">
             Management System

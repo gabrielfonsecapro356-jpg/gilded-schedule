@@ -1,24 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { getAppointmentsByDate } from '@/data/mockData';
+import { useAppData } from '@/contexts/AppDataContext';
 import { Appointment } from '@/types';
+import { DatePickerField } from '@/components/DatePickerField';
 
 export default function Agenda() {
+  const { appointments, updateAppointment } = useAppData();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  useEffect(() => {
-    setAppointments(getAppointmentsByDate(selectedDate));
-  }, [selectedDate]);
+  // Get appointments for selected date from context
+  const dayAppointments = appointments.filter(
+    apt => apt.date.toDateString() === selectedDate.toDateString()
+  ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const handleStatusChange = (id: string, status: Appointment['status']) => {
-    setAppointments(prev =>
-      prev.map(apt => apt.id === id ? { ...apt, status } : apt)
-    );
+  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+    const updateData: Partial<Appointment> = { status };
+    
+    if (status === 'cancelled') {
+      updateData.cancelledAt = new Date();
+      if (reason) {
+        updateData.cancelReason = reason;
+      }
+    } else if (status === 'completed') {
+      updateData.completedAt = new Date();
+    } else if (status === 'scheduled') {
+      // Resetting status - clear previous timestamps
+      updateData.cancelledAt = undefined;
+      updateData.cancelReason = undefined;
+      updateData.completedAt = undefined;
+    }
+    
+    updateAppointment(id, updateData);
   };
 
   const goToPreviousDay = () => {
@@ -50,12 +66,22 @@ export default function Agenda() {
   });
 
   const getAppointmentForTime = (time: string) => {
-    return appointments.find(apt => {
+    return dayAppointments.find(apt => {
       const [aptHour] = apt.startTime.split(':').map(Number);
       const [slotHour] = time.split(':').map(Number);
       return aptHour === slotHour;
     });
   };
+
+  // Calculate stats - exclude cancelled from totals
+  const activeAppointments = dayAppointments.filter(a => a.status !== 'cancelled');
+  const completedAppointments = dayAppointments.filter(a => a.status === 'completed');
+  const scheduledAppointments = dayAppointments.filter(a => a.status === 'scheduled');
+  
+  // Revenue only counts completed appointments
+  const totalRevenue = completedAppointments.reduce((sum, a) => 
+    sum + a.services.reduce((s, svc) => s + svc.price, 0), 0
+  );
 
   return (
     <Layout>
@@ -94,12 +120,19 @@ export default function Agenda() {
                   })}
                 </p>
               </div>
-              {!isToday && (
-                <Button variant="outline" size="sm" onClick={goToToday}>
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  Hoje
-                </Button>
-              )}
+              <div className="flex gap-2">
+                <DatePickerField
+                  date={selectedDate}
+                  onDateChange={(date) => date && setSelectedDate(date)}
+                  className="w-auto"
+                />
+                {!isToday && (
+                  <Button variant="outline" size="sm" onClick={goToToday}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    Hoje
+                  </Button>
+                )}
+              </div>
             </div>
             
             <Button variant="ghost" size="icon" onClick={goToNextDay}>
@@ -125,10 +158,22 @@ export default function Agenda() {
                 {/* Content area */}
                 <div className="flex-1 border-l-2 border-border pl-4 pb-4">
                   {appointment ? (
-                    <AppointmentCard
-                      appointment={appointment}
-                      onStatusChange={handleStatusChange}
-                    />
+                    appointment.status === 'cancelled' ? (
+                      // Show available slot for cancelled appointments
+                      <div className="h-16 flex items-center">
+                        <span className="text-sm text-muted-foreground/50">
+                          Horário disponível
+                        </span>
+                        <span className="text-xs text-red-400/50 ml-2">
+                          (cancelado: {appointment.clientName})
+                        </span>
+                      </div>
+                    ) : (
+                      <AppointmentCard
+                        appointment={appointment}
+                        onStatusChange={handleStatusChange}
+                      />
+                    )
                   ) : (
                     <div className="h-16 flex items-center">
                       <span className="text-sm text-muted-foreground/50">
@@ -142,32 +187,30 @@ export default function Agenda() {
           })}
         </div>
 
-        {/* Summary */}
+        {/* Summary - excludes cancelled */}
         <Card className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-2xl font-heading font-bold text-gradient-gold">
-                {appointments.length}
+                {activeAppointments.length}
               </p>
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-sm text-muted-foreground">Total Ativos</p>
             </div>
             <div>
               <p className="text-2xl font-heading font-bold text-foreground">
-                {appointments.filter(a => a.status === 'confirmed').length}
+                {scheduledAppointments.length}
               </p>
-              <p className="text-sm text-muted-foreground">Confirmados</p>
+              <p className="text-sm text-muted-foreground">Agendados</p>
             </div>
             <div>
               <p className="text-2xl font-heading font-bold text-green-500">
-                {appointments.filter(a => a.status === 'completed').length}
+                {completedAppointments.length}
               </p>
               <p className="text-sm text-muted-foreground">Concluídos</p>
             </div>
             <div>
               <p className="text-2xl font-heading font-bold text-foreground">
-                R$ {appointments.reduce((sum, a) => 
-                  sum + a.services.reduce((s, svc) => s + svc.price, 0), 0
-                ).toFixed(2)}
+                R$ {totalRevenue.toFixed(2)}
               </p>
               <p className="text-sm text-muted-foreground">Faturamento</p>
             </div>

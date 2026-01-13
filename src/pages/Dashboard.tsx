@@ -1,6 +1,5 @@
 import { 
   Calendar, 
-  Users, 
   Scissors, 
   TrendingUp, 
   Clock,
@@ -21,16 +20,30 @@ export default function Dashboard() {
   const { services, appointments, updateAppointment, settings } = useAppData();
   const today = new Date();
 
+  // Filter out cancelled appointments from today's view
   const todayAppointments = appointments.filter(
-    apt => apt.date.toDateString() === today.toDateString()
+    apt => apt.date.toDateString() === today.toDateString() && apt.status !== 'cancelled'
   ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const handleStatusChange = (id: string, status: Appointment['status']) => {
-    updateAppointment(id, { status });
+  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+    const updateData: Partial<Appointment> = { status };
+    
+    if (status === 'cancelled') {
+      updateData.cancelledAt = new Date();
+      if (reason) {
+        updateData.cancelReason = reason;
+      }
+    } else if (status === 'completed') {
+      updateData.completedAt = new Date();
+    }
+    
+    updateAppointment(id, updateData);
   };
 
   const completedToday = todayAppointments.filter(a => a.status === 'completed').length;
   const upcomingToday = todayAppointments.filter(a => a.status === 'scheduled' || a.status === 'confirmed').length;
+  
+  // Revenue only counts completed appointments
   const totalRevenue = todayAppointments
     .filter(a => a.status === 'completed')
     .reduce((sum, a) => sum + a.services.reduce((s, svc) => s + svc.price, 0), 0);
@@ -96,7 +109,7 @@ export default function Dashboard() {
           <StatCard
             title="Faturamento Hoje"
             value={`R$ ${totalRevenue.toFixed(2)}`}
-            subtitle="em serviços realizados"
+            subtitle="em serviços concluídos"
             icon={<TrendingUp className="w-6 h-6 text-primary" />}
             trend={{ value: 12, isPositive: true }}
           />

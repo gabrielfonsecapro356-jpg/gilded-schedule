@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Search, Filter, UserPlus } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Search, Filter, UserPlus, Calendar as CalendarIcon } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { useAppData } from '@/contexts/AppDataContext';
 import { Appointment } from '@/types';
 import { ClientFormDialog } from '@/components/ClientFormDialog';
+import { DatePickerField } from '@/components/DatePickerField';
 import {
   Dialog,
   DialogContent,
@@ -32,18 +33,37 @@ export default function Appointments() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  // Period filter state
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
+  const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
+
   // New appointment form state
   const [selectedClient, setSelectedClient] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
 
-  const handleStatusChange = (id: string, status: Appointment['status']) => {
-    updateAppointment(id, { status });
+  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+    const updateData: Partial<Appointment> = { status };
+    
+    if (status === 'cancelled') {
+      updateData.cancelledAt = new Date();
+      if (reason) {
+        updateData.cancelReason = reason;
+      }
+    } else if (status === 'completed') {
+      updateData.completedAt = new Date();
+    } else if (status === 'scheduled') {
+      updateData.cancelledAt = undefined;
+      updateData.cancelReason = undefined;
+      updateData.completedAt = undefined;
+    }
+    
+    updateAppointment(id, updateData);
     toast({
       title: 'Status atualizado',
-      description: `Agendamento marcado como ${status === 'completed' ? 'concluído' : 'cancelado'}.`,
+      description: `Agendamento marcado como ${status === 'completed' ? 'concluído' : status === 'cancelled' ? 'cancelado' : 'agendado'}.`,
     });
   };
 
@@ -71,7 +91,7 @@ export default function Appointments() {
       clientId: selectedClient,
       clientName: client?.name || '',
       clientPhone: client?.phone || '',
-      date: new Date(selectedDate),
+      date: selectedDate,
       startTime: selectedTime,
       endTime,
       services: selectedServicesList,
@@ -91,7 +111,7 @@ export default function Appointments() {
 
   const resetForm = () => {
     setSelectedClient('');
-    setSelectedDate('');
+    setSelectedDate(undefined);
     setSelectedTime('');
     setSelectedServices([]);
     setNotes('');
@@ -105,11 +125,59 @@ export default function Appointments() {
     );
   };
 
-  const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = apt.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Calculate monthly stats
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthlyAppointments = useMemo(() => {
+    return appointments.filter(apt => {
+      const aptDate = new Date(apt.date);
+      return aptDate.getMonth() === currentMonth && aptDate.getFullYear() === currentYear;
+    });
+  }, [appointments, currentMonth, currentYear]);
+
+  const monthlyStats = useMemo(() => {
+    const total = monthlyAppointments.length;
+    const scheduled = monthlyAppointments.filter(a => a.status === 'scheduled').length;
+    const completed = monthlyAppointments.filter(a => a.status === 'completed').length;
+    const cancelled = monthlyAppointments.filter(a => a.status === 'cancelled').length;
+    const revenue = monthlyAppointments
+      .filter(a => a.status === 'completed')
+      .reduce((sum, a) => sum + a.services.reduce((s, svc) => s + svc.price, 0), 0);
+    return { total, scheduled, completed, cancelled, revenue };
+  }, [monthlyAppointments]);
+
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter(apt => {
+      const matchesSearch = apt.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
+      
+      // Period filter
+      let matchesPeriod = true;
+      if (startDateFilter) {
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(0, 0, 0, 0);
+        const startDate = new Date(startDateFilter);
+        startDate.setHours(0, 0, 0, 0);
+        matchesPeriod = aptDate >= startDate;
+      }
+      if (matchesPeriod && endDateFilter) {
+        const aptDate = new Date(apt.date);
+        aptDate.setHours(23, 59, 59, 999);
+        const endDate = new Date(endDateFilter);
+        endDate.setHours(23, 59, 59, 999);
+        matchesPeriod = aptDate <= endDate;
+      }
+      
+      return matchesSearch && matchesStatus && matchesPeriod;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [appointments, searchTerm, statusFilter, startDateFilter, endDateFilter]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setStartDateFilter(undefined);
+    setEndDateFilter(undefined);
+  };
 
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
     const hour = 8 + Math.floor(i / 2);
@@ -182,10 +250,10 @@ export default function Appointments() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Data</label>
-                      <Input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                      <DatePickerField
+                        date={selectedDate}
+                        onDateChange={setSelectedDate}
+                        placeholder="Selecione a data"
                       />
                     </div>
                     <div className="space-y-2">
@@ -249,31 +317,87 @@ export default function Appointments() {
           </div>
         </div>
 
+        {/* Monthly Stats */}
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">
+            Resumo do Mês ({new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div>
+              <p className="text-xl font-heading font-bold text-gradient-gold">{monthlyStats.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold text-blue-400">{monthlyStats.scheduled}</p>
+              <p className="text-xs text-muted-foreground">Agendados</p>
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold text-green-500">{monthlyStats.completed}</p>
+              <p className="text-xs text-muted-foreground">Concluídos</p>
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold text-red-400">{monthlyStats.cancelled}</p>
+              <p className="text-xs text-muted-foreground">Cancelados</p>
+            </div>
+            <div>
+              <p className="text-xl font-heading font-bold text-foreground">R$ {monthlyStats.revenue.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Faturamento</p>
+            </div>
+          </div>
+        </Card>
+
         {/* Filters */}
         <Card className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filtrar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="scheduled">Agendados</SelectItem>
+                  <SelectItem value="confirmed">Confirmados</SelectItem>
+                  <SelectItem value="completed">Concluídos</SelectItem>
+                  <SelectItem value="cancelled">Cancelados</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filtrar status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="scheduled">Agendados</SelectItem>
-                <SelectItem value="confirmed">Confirmados</SelectItem>
-                <SelectItem value="completed">Concluídos</SelectItem>
-                <SelectItem value="cancelled">Cancelados</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Period Filter */}
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">Período</label>
+                <div className="flex gap-2 items-center">
+                  <DatePickerField
+                    date={startDateFilter}
+                    onDateChange={setStartDateFilter}
+                    placeholder="Data inicial"
+                  />
+                  <span className="text-muted-foreground">até</span>
+                  <DatePickerField
+                    date={endDateFilter}
+                    onDateChange={setEndDateFilter}
+                    placeholder="Data final"
+                  />
+                </div>
+              </div>
+              {(searchTerm || statusFilter !== 'all' || startDateFilter || endDateFilter) && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 
@@ -285,6 +409,7 @@ export default function Appointments() {
                 key={appointment.id}
                 appointment={appointment}
                 onStatusChange={handleStatusChange}
+                showCancelledSlot
               />
             ))
           ) : (

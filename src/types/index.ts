@@ -25,6 +25,9 @@ export interface Appointment {
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
   googleEventId?: string;
+  cancelledAt?: Date;
+  cancelReason?: string;
+  completedAt?: Date;
 }
 
 export interface DailyStats {

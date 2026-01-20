@@ -1,23 +1,11 @@
 import { Service, Appointment, Client } from '@/types';
 
 export const SERVICES: Service[] = [
-  { id: '1', name: 'Corte Masculino', duration: 45, price: 40 },
-  { id: '2', name: 'Corte Feminino', duration: 60, price: 40 },
-  { id: '3', name: 'Sobrancelhas', duration: 15, price: 20 },
-  { id: '4', name: 'Pezinho', duration: 15, price: 20 },
-  { id: '5', name: 'Selagem', duration: 90, price: 60 },
-  { id: '6', name: 'Progressiva', duration: 120, price: 60 },
-  { id: '7', name: 'Alisamento', duration: 60, price: 30 },
-  { id: '8', name: 'Tintura', duration: 75, price: 45 },
-  { id: '9', name: 'Corte Feminino Completo', duration: 90, price: 70 },
+  
 ];
 
 export const MOCK_CLIENTS: Client[] = [
-  { id: '1', name: 'João Silva', phone: '(11) 99999-1111', email: 'joao@email.com', createdAt: new Date('2024-01-15') },
-  { id: '2', name: 'Carlos Santos', phone: '(11) 99999-2222', email: 'carlos@email.com', createdAt: new Date('2024-02-20') },
-  { id: '3', name: 'Pedro Oliveira', phone: '(11) 99999-3333', createdAt: new Date('2024-03-10') },
-  { id: '4', name: 'Lucas Ferreira', phone: '(11) 99999-4444', email: 'lucas@email.com', createdAt: new Date('2024-01-05') },
-  { id: '5', name: 'Marcos Lima', phone: '(11) 99999-5555', createdAt: new Date('2024-04-01') },
+  
 ];
 
 const today = new Date();

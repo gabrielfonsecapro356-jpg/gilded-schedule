@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Phone, Mail, Pencil, Trash2 } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,13 +13,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatPhone, isValidPhone, isValidEmail, validationMessages } from '@/lib/validation';
 
 export default function Clients() {
-  const { clients, addClient, appointments } = useAppData();
+  const { clients, addClient, updateClient, deleteClient, appointments } = useAppData();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const { toast } = useToast();
 
   // New client form state
@@ -29,12 +33,28 @@ export default function Clients() {
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
 
+  // Edit client form state
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhoneError, setEditPhoneError] = useState('');
+  const [editEmailError, setEditEmailError] = useState('');
+
   const resetForm = () => {
     setNewName('');
     setNewPhone('');
     setNewEmail('');
     setPhoneError('');
     setEmailError('');
+  };
+
+  const resetEditForm = () => {
+    setEditName('');
+    setEditPhone('');
+    setEditEmail('');
+    setEditPhoneError('');
+    setEditEmailError('');
+    setSelectedClient(null);
   };
 
   const handlePhoneChange = (value: string) => {
@@ -53,6 +73,25 @@ export default function Clients() {
       setEmailError(validationMessages.email);
     } else {
       setEmailError('');
+    }
+  };
+
+  const handleEditPhoneChange = (value: string) => {
+    const formatted = formatPhone(value);
+    setEditPhone(formatted);
+    if (formatted && !isValidPhone(formatted)) {
+      setEditPhoneError(validationMessages.phone);
+    } else {
+      setEditPhoneError('');
+    }
+  };
+
+  const handleEditEmailChange = (value: string) => {
+    setEditEmail(value);
+    if (value && !isValidEmail(value)) {
+      setEditEmailError(validationMessages.email);
+    } else {
+      setEditEmailError('');
     }
   };
 
@@ -100,6 +139,80 @@ export default function Clients() {
       title: 'Cliente cadastrado',
       description: `${newName} foi adicionado com sucesso.`,
     });
+  };
+
+  const handleOpenEditDialog = (client: Client) => {
+    setSelectedClient(client);
+    setEditName(client.name);
+    setEditPhone(client.phone);
+    setEditEmail(client.email || '');
+    setEditPhoneError('');
+    setEditEmailError('');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateClient = () => {
+    if (!selectedClient) return;
+
+    if (!editName.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Nome é obrigatório.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!editPhone || !isValidPhone(editPhone)) {
+      toast({
+        title: 'Erro',
+        description: validationMessages.phone,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (editEmail && !isValidEmail(editEmail)) {
+      toast({
+        title: 'Erro',
+        description: validationMessages.email,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    updateClient(selectedClient.id, {
+      name: editName.trim(),
+      phone: editPhone,
+      email: editEmail.trim() || undefined,
+    });
+
+    setIsEditDialogOpen(false);
+    resetEditForm();
+    
+    toast({
+      title: 'Cliente atualizado',
+      description: `${editName} foi atualizado com sucesso.`,
+    });
+  };
+
+  const handleOpenDeleteDialog = (client: Client) => {
+    setSelectedClient(client);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteClient = () => {
+    if (!selectedClient) return;
+
+    deleteClient(selectedClient.id);
+    setIsDeleteDialogOpen(false);
+    
+    toast({
+      title: 'Cliente excluído',
+      description: `${selectedClient.name} foi removido com sucesso.`,
+    });
+
+    setSelectedClient(null);
   };
 
   const getClientStats = (clientId: string) => {
@@ -224,6 +337,24 @@ export default function Clients() {
                         Cliente desde {client.createdAt.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
                       </p>
                     </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleOpenEditDialog(client)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleOpenDeleteDialog(client)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -266,6 +397,67 @@ export default function Clients() {
             </p>
           </Card>
         )}
+
+        {/* Edit Client Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) resetEditForm();
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="font-heading text-xl">
+                Editar Cliente
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome *</label>
+                <Input
+                  placeholder="Nome completo"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telefone *</label>
+                <Input
+                  placeholder="(99) 99999-9999"
+                  value={editPhone}
+                  onChange={(e) => handleEditPhoneChange(e.target.value)}
+                  maxLength={15}
+                />
+                {editPhoneError && (
+                  <p className="text-xs text-destructive">{editPhoneError}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={editEmail}
+                  onChange={(e) => handleEditEmailChange(e.target.value)}
+                />
+                {editEmailError && (
+                  <p className="text-xs text-destructive">{editEmailError}</p>
+                )}
+              </div>
+              <Button variant="gold" className="w-full" onClick={handleUpdateClient}>
+                Salvar Alterações
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Excluir Cliente"
+          description={`Tem certeza que deseja excluir ${selectedClient?.name}? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          onConfirm={handleDeleteClient}
+        />
       </div>
     </Layout>
   );

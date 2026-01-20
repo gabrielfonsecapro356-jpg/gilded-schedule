@@ -45,7 +45,7 @@ export function AppointmentCard({ appointment, onStatusChange, showCancelledSlot
 
   const status = statusConfig[appointment.status];
   const StatusIcon = status.icon;
-  const totalPrice = appointment.services.reduce((sum, s) => sum + s.price, 0);
+  const totalPrice = appointment.services.filter(Boolean).reduce((sum, s) => sum + s.price, 0);
 
   const handleComplete = () => {
     onStatusChange?.(appointment.id, 'completed');
@@ -163,7 +163,7 @@ export function AppointmentCard({ appointment, onStatusChange, showCancelledSlot
 
             {/* Services */}
             <div className="flex flex-wrap gap-2">
-              {appointment.services.map((service) => (
+              {appointment.services.filter(Boolean).map((service) => (
                 <span
                   key={service.id}
                   className="px-3 py-1 rounded-full bg-secondary text-xs font-medium text-secondary-foreground"

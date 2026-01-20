@@ -195,7 +195,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {nextAppointment.services.map((s) => (
+                      {nextAppointment.services.filter(Boolean).map((s) => (
                         <span
                           key={s.id}
                           className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary"

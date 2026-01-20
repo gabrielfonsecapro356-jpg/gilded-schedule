@@ -23,7 +23,7 @@ const navigation = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Serviços', href: '/services', icon: Scissors },
   { name: 'Estoque', href: '/inventory', icon: Package },
-  { name: 'Relatórios', href: '/reports', icon: BarChart3 },
+  { name: 'Relatórios de Serviços', href: '/reports', icon: BarChart3 },
   { name: 'Relatório Produtos', href: '/product-reports', icon: ShoppingCart },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];

@@ -98,6 +98,36 @@ export default function Agenda() {
           </div>
         </div>
 
+        {/* Summary Stats - at top like Appointments page */}
+        <Card className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-heading font-bold text-gradient-gold">
+                {activeAppointments.length}
+              </p>
+              <p className="text-sm text-muted-foreground">Total Ativos</p>
+            </div>
+            <div>
+              <p className="text-2xl font-heading font-bold text-foreground">
+                {scheduledAppointments.length}
+              </p>
+              <p className="text-sm text-muted-foreground">Agendados</p>
+            </div>
+            <div>
+              <p className="text-2xl font-heading font-bold text-green-500">
+                {completedAppointments.length}
+              </p>
+              <p className="text-sm text-muted-foreground">Concluídos</p>
+            </div>
+            <div>
+              <p className="text-2xl font-heading font-bold text-foreground">
+                R$ {totalRevenue.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">Faturamento</p>
+            </div>
+          </div>
+        </Card>
+
         {/* Date Navigation */}
         <Card variant="gold" className="p-4">
           <div className="flex items-center justify-between">
@@ -187,35 +217,6 @@ export default function Agenda() {
           })}
         </div>
 
-        {/* Summary - excludes cancelled */}
-        <Card className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-heading font-bold text-gradient-gold">
-                {activeAppointments.length}
-              </p>
-              <p className="text-sm text-muted-foreground">Total Ativos</p>
-            </div>
-            <div>
-              <p className="text-2xl font-heading font-bold text-foreground">
-                {scheduledAppointments.length}
-              </p>
-              <p className="text-sm text-muted-foreground">Agendados</p>
-            </div>
-            <div>
-              <p className="text-2xl font-heading font-bold text-green-500">
-                {completedAppointments.length}
-              </p>
-              <p className="text-sm text-muted-foreground">Concluídos</p>
-            </div>
-            <div>
-              <p className="text-2xl font-heading font-bold text-foreground">
-                R$ {totalRevenue.toFixed(2)}
-              </p>
-              <p className="text-sm text-muted-foreground">Faturamento</p>
-            </div>
-          </div>
-        </Card>
       </div>
     </Layout>
   );

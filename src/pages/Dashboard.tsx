@@ -4,8 +4,11 @@ import {
   TrendingUp, 
   Clock,
   ArrowRight,
-  UserPlus
+  UserPlus,
+  CalendarDays
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { StatCard } from '@/components/StatCard';
@@ -174,8 +177,14 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="text-3xl font-heading font-bold text-gradient-gold">
-                      {nextAppointment.startTime}
+                    <div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <CalendarDays className="w-4 h-4" />
+                        <span>{format(nextAppointment.date, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
+                      </div>
+                      <div className="text-3xl font-heading font-bold text-gradient-gold">
+                        {nextAppointment.startTime}
+                      </div>
                     </div>
                     <div>
                       <p className="font-medium text-foreground">

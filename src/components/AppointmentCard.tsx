@@ -135,19 +135,24 @@ export function AppointmentCard({ appointment, onStatusChange, showCancelledSlot
               <div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock className="w-4 h-4" />
-                  <span className="font-medium">{appointment.startTime} - {appointment.endTime}</span>
+                  <span className="font-medium">
+                    {format(appointment.date, "dd/MM", { locale: ptBR })} • {appointment.startTime} - {appointment.endTime}
+                  </span>
                 </div>
                 <h3 className="text-lg font-heading font-semibold text-foreground">
                   {appointment.clientName}
                 </h3>
               </div>
-              <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
-                status.className
-              )}>
-                <StatusIcon className="w-3.5 h-3.5" />
-                {status.label}
-              </div>
+              {/* Only show badge for non-scheduled status */}
+              {appointment.status !== 'scheduled' && (
+                <div className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                  status.className
+                )}>
+                  <StatusIcon className="w-3.5 h-3.5" />
+                  {status.label}
+                </div>
+              )}
             </div>
 
             {/* Contact */}

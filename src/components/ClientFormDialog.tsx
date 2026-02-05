@@ -9,10 +9,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAppData, Client } from '@/contexts/AppDataContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatPhone, isValidPhone, isValidEmail, validationMessages } from '@/lib/validation';
-import { Client } from '@/types';
 
 interface ClientFormDialogProps {
   trigger?: React.ReactNode;
@@ -57,7 +56,7 @@ export function ClientFormDialog({ trigger, onClientCreated }: ClientFormDialogP
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       toast({
         title: 'Erro',
@@ -85,24 +84,22 @@ export function ClientFormDialog({ trigger, onClientCreated }: ClientFormDialogP
       return;
     }
 
-    const newClient: Client = {
-      id: Date.now().toString(),
+    const newClient = await addClient({
       name: name.trim(),
       phone,
       email: email.trim() || undefined,
-      createdAt: new Date(),
-    };
-
-    addClient(newClient);
-    
-    toast({
-      title: 'Cliente cadastrado',
-      description: `${newClient.name} foi adicionado com sucesso.`,
     });
 
-    onClientCreated?.(newClient);
-    setIsOpen(false);
-    resetForm();
+    if (newClient) {
+      toast({
+        title: 'Cliente cadastrado',
+        description: `${newClient.name} foi adicionado com sucesso.`,
+      });
+
+      onClientCreated?.(newClient);
+      setIsOpen(false);
+      resetForm();
+    }
   };
 
   return (

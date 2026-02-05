@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
-import { Scissors, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Scissors, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,11 +8,13 @@ import { Logo } from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,27 +24,47 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não coincidem.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: 'Erro',
+        description: 'A senha deve ter pelo menos 6 caracteres.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const result = await signup(email, password, name);
+      
+      if (result.success) {
         toast({
-          title: 'Bem-vindo!',
-          description: 'Login realizado com sucesso.',
+          title: 'Conta criada!',
+          description: 'Verifique seu email para confirmar o cadastro.',
         });
-        navigate('/dashboard');
+        navigate('/login');
       } else {
         toast({
-          title: 'Erro de autenticação',
-          description: 'Email ou senha incorretos.',
+          title: 'Erro ao criar conta',
+          description: result.error || 'Ocorreu um erro ao criar sua conta.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao fazer login.',
+        description: 'Ocorreu um erro ao criar sua conta.',
         variant: 'destructive',
       });
     } finally {
@@ -65,12 +87,12 @@ export default function Login() {
           </div>
           <div className="text-center max-w-md animate-slide-up stagger-2">
             <h1 className="text-4xl font-heading font-bold text-foreground mb-4">
-              Gerencie sua barbearia com{' '}
-              <span className="text-gradient-gold">excelência</span>
+              Comece a gerenciar sua{' '}
+              <span className="text-gradient-gold">barbearia</span>
             </h1>
             <p className="text-muted-foreground text-lg">
-              Sistema completo de gestão para barbearias modernas. 
-              Agendamentos, clientes e relatórios em um só lugar.
+              Crie sua conta gratuitamente e tenha acesso a todas as 
+              funcionalidades do sistema.
             </p>
           </div>
           
@@ -93,7 +115,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right side - Login form */}
+      {/* Right side - Register form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md animate-fade-in">
           <div className="lg:hidden mb-8 flex justify-center">
@@ -104,14 +126,31 @@ export default function Login() {
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
-                  Acesse sua conta
+                  Criar conta
                 </h2>
                 <p className="text-muted-foreground">
-                  Entre com suas credenciais para continuar
+                  Preencha os dados para começar
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Nome
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Seu nome"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-12"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     Email
@@ -137,11 +176,30 @@ export default function Login() {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Mínimo 6 caracteres"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-12"
                       required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Confirmar Senha
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="Repita a senha"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-12"
+                      required
+                      minLength={6}
                     />
                   </div>
                 </div>
@@ -157,7 +215,7 @@ export default function Login() {
                     <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      Entrar
+                      Criar Conta
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   )}
@@ -166,9 +224,9 @@ export default function Login() {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Não tem uma conta?{' '}
-                  <Link to="/register" className="text-primary hover:underline font-medium">
-                    Criar conta
+                  Já tem uma conta?{' '}
+                  <Link to="/login" className="text-primary hover:underline font-medium">
+                    Fazer login
                   </Link>
                 </p>
               </div>

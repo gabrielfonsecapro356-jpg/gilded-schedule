@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, Phone, CheckCircle, XCircle, AlertCircle, Edit2 } from 'lucide-react';
-import { Appointment } from '@/types';
+import { Appointment } from '@/contexts/AppDataContext';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';

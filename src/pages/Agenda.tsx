@@ -4,8 +4,7 @@ import { Layout } from '@/components/Layout';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useAppData } from '@/contexts/AppDataContext';
-import { Appointment } from '@/types';
+import { useAppData, Appointment } from '@/contexts/AppDataContext';
 import { DatePickerField } from '@/components/DatePickerField';
 
 export default function Agenda() {
@@ -17,7 +16,7 @@ export default function Agenda() {
     apt => apt.date.toDateString() === selectedDate.toDateString()
   ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+  const handleStatusChange = async (id: string, status: Appointment['status'], reason?: string) => {
     const updateData: Partial<Appointment> = { status };
     
     if (status === 'cancelled') {
@@ -34,7 +33,7 @@ export default function Agenda() {
       updateData.completedAt = undefined;
     }
     
-    updateAppointment(id, updateData);
+    await updateAppointment(id, updateData);
   };
 
   const goToPreviousDay = () => {

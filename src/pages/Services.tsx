@@ -4,8 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAppData } from '@/contexts/AppDataContext';
-import { Service } from '@/types';
+import { useAppData, Service } from '@/contexts/AppDataContext';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +40,7 @@ export default function Services() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !duration || !price) {
       toast({
         title: 'Erro',
@@ -52,7 +51,7 @@ export default function Services() {
     }
 
     if (editingService) {
-      updateService(editingService.id, {
+      await updateService(editingService.id, {
         name,
         duration: parseInt(duration),
         price: parseFloat(price),
@@ -62,13 +61,12 @@ export default function Services() {
         description: `${name} foi atualizado com sucesso.`,
       });
     } else {
-      const newService: Service = {
-        id: Date.now().toString(),
+      await addService({
         name,
         duration: parseInt(duration),
         price: parseFloat(price),
-      };
-      addService(newService);
+        isActive: true,
+      });
       toast({
         title: 'Serviço criado',
         description: `${name} foi adicionado com sucesso.`,
@@ -79,8 +77,8 @@ export default function Services() {
     resetForm();
   };
 
-  const handleDelete = (service: Service) => {
-    deleteService(service.id);
+  const handleDelete = async (service: Service) => {
+    await deleteService(service.id);
     toast({
       title: 'Serviço removido',
       description: `${service.name} foi removido.`,

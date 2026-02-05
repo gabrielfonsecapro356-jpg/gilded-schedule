@@ -61,7 +61,7 @@ export default function Inventory() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !category || !price || !cost || !stock || !minStock) {
       toast({
         title: 'Erro',
@@ -72,7 +72,7 @@ export default function Inventory() {
     }
 
     if (editingProduct) {
-      updateProduct(editingProduct.id, {
+      await updateProduct(editingProduct.id, {
         name,
         category,
         price: parseFloat(price),
@@ -85,8 +85,7 @@ export default function Inventory() {
         description: `${name} foi atualizado com sucesso.`,
       });
     } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
+      await addProduct({
         name,
         category,
         price: parseFloat(price),
@@ -94,8 +93,7 @@ export default function Inventory() {
         stock: parseInt(stock),
         minStock: parseInt(minStock),
         soldCount: 0,
-      };
-      addProduct(newProduct);
+      });
       toast({
         title: 'Produto cadastrado',
         description: `${name} foi adicionado com sucesso.`,
@@ -106,8 +104,8 @@ export default function Inventory() {
     resetForm();
   };
 
-  const handleDelete = (product: Product) => {
-    deleteProduct(product.id);
+  const handleDelete = async (product: Product) => {
+    await deleteProduct(product.id);
     toast({
       title: 'Produto removido',
       description: `${product.name} foi removido.`,

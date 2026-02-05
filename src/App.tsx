@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppDataProvider } from "@/contexts/AppDataContext";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Agenda from "./pages/Agenda";
 import Appointments from "./pages/Appointments";
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/appointments" element={<Appointments />} />

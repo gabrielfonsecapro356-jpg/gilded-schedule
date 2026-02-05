@@ -5,8 +5,7 @@ import { AppointmentCard } from '@/components/AppointmentCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { useAppData } from '@/contexts/AppDataContext';
-import { Appointment } from '@/types';
+import { useAppData, Appointment, Service } from '@/contexts/AppDataContext';
 import { ClientFormDialog } from '@/components/ClientFormDialog';
 import { DatePickerField } from '@/components/DatePickerField';
 import {
@@ -44,7 +43,7 @@ export default function Appointments() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
 
-  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+  const handleStatusChange = async (id: string, status: Appointment['status'], reason?: string) => {
     const updateData: Partial<Appointment> = { status };
     
     if (status === 'cancelled') {
@@ -60,14 +59,14 @@ export default function Appointments() {
       updateData.completedAt = undefined;
     }
     
-    updateAppointment(id, updateData);
+    await updateAppointment(id, updateData);
     toast({
       title: 'Status atualizado',
       description: `Agendamento marcado como ${status === 'completed' ? 'concluído' : status === 'cancelled' ? 'cancelado' : 'agendado'}.`,
     });
   };
 
-  const handleCreateAppointment = () => {
+  const handleCreateAppointment = async () => {
     if (!selectedClient || !selectedDate || !selectedTime || selectedServices.length === 0) {
       toast({
         title: 'Erro',
@@ -86,8 +85,7 @@ export default function Appointments() {
     const endMinutes = (minutes + totalDuration) % 60;
     const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
 
-    const newAppointment: Appointment = {
-      id: Date.now().toString(),
+    await addAppointment({
       clientId: selectedClient,
       clientName: client?.name || '',
       clientPhone: client?.phone || '',
@@ -97,9 +95,8 @@ export default function Appointments() {
       services: selectedServicesList,
       status: 'scheduled',
       notes: notes || undefined,
-    };
-
-    addAppointment(newAppointment);
+    });
+    
     setIsDialogOpen(false);
     resetForm();
     

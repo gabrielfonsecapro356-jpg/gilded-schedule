@@ -16,8 +16,7 @@ import { AppointmentCard } from '@/components/AppointmentCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ClientFormDialog } from '@/components/ClientFormDialog';
-import { useAppData } from '@/contexts/AppDataContext';
-import { Appointment } from '@/types';
+import { useAppData, Appointment } from '@/contexts/AppDataContext';
 
 export default function Dashboard() {
   const { services, appointments, updateAppointment, settings } = useAppData();
@@ -28,7 +27,7 @@ export default function Dashboard() {
     apt => apt.date.toDateString() === today.toDateString() && apt.status !== 'cancelled'
   ).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const handleStatusChange = (id: string, status: Appointment['status'], reason?: string) => {
+  const handleStatusChange = async (id: string, status: Appointment['status'], reason?: string) => {
     const updateData: Partial<Appointment> = { status };
     
     if (status === 'cancelled') {
@@ -40,7 +39,7 @@ export default function Dashboard() {
       updateData.completedAt = new Date();
     }
     
-    updateAppointment(id, updateData);
+    await updateAppointment(id, updateData);
   };
 
   const completedToday = todayAppointments.filter(a => a.status === 'completed').length;

@@ -4,8 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useAppData } from '@/contexts/AppDataContext';
-import { Client } from '@/types';
+import { useAppData, Client } from '@/contexts/AppDataContext';
 import {
   Dialog,
   DialogContent,
@@ -95,7 +94,7 @@ export default function Clients() {
     }
   };
 
-  const handleCreateClient = () => {
+  const handleCreateClient = async () => {
     if (!newName.trim()) {
       toast({
         title: 'Erro',
@@ -123,15 +122,12 @@ export default function Clients() {
       return;
     }
 
-    const newClient: Client = {
-      id: Date.now().toString(),
+    await addClient({
       name: newName.trim(),
       phone: newPhone,
       email: newEmail.trim() || undefined,
-      createdAt: new Date(),
-    };
-
-    addClient(newClient);
+    });
+    
     setIsDialogOpen(false);
     resetForm();
     
@@ -151,7 +147,7 @@ export default function Clients() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateClient = () => {
+  const handleUpdateClient = async () => {
     if (!selectedClient) return;
 
     if (!editName.trim()) {
@@ -181,7 +177,7 @@ export default function Clients() {
       return;
     }
 
-    updateClient(selectedClient.id, {
+    await updateClient(selectedClient.id, {
       name: editName.trim(),
       phone: editPhone,
       email: editEmail.trim() || undefined,
@@ -201,10 +197,10 @@ export default function Clients() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (!selectedClient) return;
 
-    deleteClient(selectedClient.id);
+    await deleteClient(selectedClient.id);
     setIsDeleteDialogOpen(false);
     
     toast({

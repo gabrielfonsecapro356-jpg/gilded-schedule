@@ -28,13 +28,17 @@ const navigation = [
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps) {
   const { user, logout } = useAuth();
   const { settings } = useAppData();
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border max-md:relative max-md:h-full max-md:border-r-0">
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-20 items-center px-6 border-b border-sidebar-border">
@@ -49,6 +53,7 @@ export function Sidebar() {
               <NavLink
                 key={item.name}
                 to={item.href}
+                onClick={onNavigate}
                 className={cn(
                   'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive
@@ -69,7 +74,7 @@ export function Sidebar() {
         {/* User section */}
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-gold flex items-center justify-center flex-shrink-0">
               <span className="text-primary-foreground font-semibold text-sm">
                 {user?.name.charAt(0).toUpperCase()}
               </span>

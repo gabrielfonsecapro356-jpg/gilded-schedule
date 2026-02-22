@@ -20,39 +20,6 @@ export interface Appointment {
   completedAt?: Date;
 }
 
-interface DbAppointment {
-  id: string;
-  user_id: string;
-  client_id: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  notes: string | null;
-  cancel_reason: string | null;
-  cancelled_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-  clients: {
-    id: string;
-    name: string;
-    phone: string;
-  };
-}
-
-interface DbAppointmentService {
-  service_id: string;
-  price_at_time: number;
-  services: {
-    id: string;
-    name: string;
-    duration: number;
-    price: number;
-    is_active: boolean;
-  };
-}
-
 export function useAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +30,6 @@ export function useAppointments() {
     if (!user) return;
     
     try {
-      // Fetch appointments with client info
       const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('appointments')
         .select(`
@@ -78,7 +44,6 @@ export function useAppointments() {
 
       if (appointmentsError) throw appointmentsError;
 
-      // Fetch appointment services
       const appointmentIds = (appointmentsData || []).map(a => a.id);
       
       let servicesMap: Record<string, Service[]> = {};
@@ -102,7 +67,6 @@ export function useAppointments() {
 
         if (servicesError) throw servicesError;
 
-        // Group services by appointment
         (appointmentServices || []).forEach((as: any) => {
           if (!servicesMap[as.appointment_id]) {
             servicesMap[as.appointment_id] = [];
@@ -124,7 +88,7 @@ export function useAppointments() {
         clientId: apt.client_id,
         clientName: apt.clients?.name || 'Cliente não encontrado',
         clientPhone: apt.clients?.phone || '',
-        date: new Date(apt.date),
+        date: new Date(apt.date + 'T00:00:00'),
         startTime: apt.start_time.slice(0, 5),
         endTime: apt.end_time.slice(0, 5),
         services: servicesMap[apt.id] || [],
@@ -156,7 +120,6 @@ export function useAppointments() {
     if (!user) return null;
 
     try {
-      // Create appointment
       const { data: aptData, error: aptError } = await supabase
         .from('appointments')
         .insert({
@@ -173,7 +136,6 @@ export function useAppointments() {
 
       if (aptError) throw aptError;
 
-      // Add services
       if (appointment.services.length > 0) {
         const serviceInserts = appointment.services.map(s => ({
           appointment_id: aptData.id,
@@ -188,13 +150,8 @@ export function useAppointments() {
         if (servicesError) throw servicesError;
       }
 
-      const newAppointment: Appointment = {
-        ...appointment,
-        id: aptData.id,
-      };
-
-      setAppointments(prev => [...prev, newAppointment]);
-      return newAppointment;
+      await fetchAppointments();
+      return { ...appointment, id: aptData.id } as Appointment;
     } catch (error: any) {
       console.error('Error adding appointment:', error);
       toast({
@@ -242,6 +199,64 @@ export function useAppointments() {
     }
   };
 
+  const editAppointment = async (
+    id: string, 
+    updates: Partial<Omit<Appointment, 'id'>>,
+    newServices?: Service[]
+  ) => {
+    try {
+      // Update appointment fields
+      const updateData: Record<string, any> = {};
+      if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
+      if (updates.date !== undefined) updateData.date = updates.date.toISOString().split('T')[0];
+      if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
+      if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
+      if (updates.notes !== undefined) updateData.notes = updates.notes || null;
+
+      if (Object.keys(updateData).length > 0) {
+        const { error } = await supabase
+          .from('appointments')
+          .update(updateData)
+          .eq('id', id);
+        if (error) throw error;
+      }
+
+      // Replace services if provided
+      if (newServices) {
+        // Delete existing services
+        const { error: deleteError } = await supabase
+          .from('appointment_services')
+          .delete()
+          .eq('appointment_id', id);
+        if (deleteError) throw deleteError;
+
+        // Insert new services
+        if (newServices.length > 0) {
+          const serviceInserts = newServices.map(s => ({
+            appointment_id: id,
+            service_id: s.id,
+            price_at_time: s.price,
+          }));
+          const { error: insertError } = await supabase
+            .from('appointment_services')
+            .insert(serviceInserts);
+          if (insertError) throw insertError;
+        }
+      }
+
+      await fetchAppointments();
+      return true;
+    } catch (error: any) {
+      console.error('Error editing appointment:', error);
+      toast({
+        title: 'Erro ao editar agendamento',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   const deleteAppointment = async (id: string) => {
     try {
       const { error } = await supabase
@@ -269,6 +284,7 @@ export function useAppointments() {
     isLoading,
     addAppointment,
     updateAppointment,
+    editAppointment,
     deleteAppointment,
     refetch: fetchAppointments,
   };

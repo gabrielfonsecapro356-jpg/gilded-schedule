@@ -84,14 +84,22 @@ export default function Appointments() {
     return slots;
   }, []);
 
+  // Format date as YYYY-MM-DD in local timezone
+  const formatLocalDate = (date: Date) => {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
   // Get booked time ranges for selected date
   const getAvailableTimeSlots = (date: Date | undefined, excludeAppointmentId?: string) => {
     if (!date) return allTimeSlots;
     
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(date);
     const bookedRanges = appointments
       .filter(apt => {
-        const aptDateStr = apt.date.toISOString().split('T')[0];
+        const aptDateStr = formatLocalDate(apt.date);
         return aptDateStr === dateStr && 
                apt.status !== 'cancelled' && 
                apt.id !== excludeAppointmentId;
@@ -134,10 +142,33 @@ export default function Appointments() {
     const totalDuration = selectedServicesList.reduce((sum, s) => sum + s.duration, 0);
     
     const [hours, minutes] = selectedTime.split(':').map(Number);
-    const endTotalMin = hours * 60 + minutes + totalDuration;
+    const startMin = hours * 60 + minutes;
+    const endTotalMin = startMin + totalDuration;
     const endHours = Math.floor(endTotalMin / 60);
     const endMinutes = endTotalMin % 60;
     const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+
+    // Check for overlap with existing appointments
+    const dateStr = formatLocalDate(selectedDate);
+    const hasConflict = appointments.some(apt => {
+      if (apt.status === 'cancelled') return false;
+      const aptDateStr = formatLocalDate(apt.date);
+      if (aptDateStr !== dateStr) return false;
+      const [sh, sm] = apt.startTime.split(':').map(Number);
+      const [eh, em] = apt.endTime.split(':').map(Number);
+      const existStart = sh * 60 + sm;
+      const existEnd = eh * 60 + em;
+      return startMin < existEnd && endTotalMin > existStart;
+    });
+
+    if (hasConflict) {
+      toast({
+        title: 'Horário indisponível',
+        description: 'Este horário conflita com outro agendamento existente.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     await addAppointment({
       clientId: selectedClient,

@@ -332,7 +332,7 @@ export default function Appointments() {
                   Novo Agendamento
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle className="font-heading text-xl">
                     Novo Agendamento
@@ -423,12 +423,13 @@ export default function Appointments() {
                         onChange={(e) => setNotes(e.target.value)}
                       />
                     </div>
-
-                    <Button variant="gold" className="w-full" onClick={handleCreateAppointment}>
-                      Criar Agendamento
-                    </Button>
                   </div>
                 </ScrollArea>
+                <div className="pt-4 border-t border-border mt-2">
+                  <Button variant="gold" className="w-full" onClick={handleCreateAppointment}>
+                    Criar Agendamento
+                  </Button>
+                </div>
               </DialogContent>
             </Dialog>
           </div>

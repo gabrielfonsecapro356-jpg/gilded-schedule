@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, UserPlus, Calendar as CalendarIcon, Pencil } from 'lucide-react';
+import { Plus, Search, Filter, UserPlus, Calendar as CalendarIcon, Pencil, Check, ChevronsUpDown } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,9 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 export default function Appointments() {
   const { clients, services, appointments, addAppointment, updateAppointment, editAppointment } = useAppData();
@@ -40,6 +43,7 @@ export default function Appointments() {
 
   // New appointment form state
   const [selectedClient, setSelectedClient] = useState('');
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -343,18 +347,44 @@ export default function Appointments() {
                     {/* Client Selection */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Cliente</label>
-                      <Select value={selectedClient} onValueChange={setSelectedClient}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cliente" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" className="max-h-60">
-                          {clients.map(client => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name} - {client.phone}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={clientPopoverOpen}
+                            className="w-full justify-between font-normal"
+                          >
+                            {selectedClient
+                              ? clients.find(c => c.id === selectedClient)?.name || 'Selecione um cliente'
+                              : 'Selecione um cliente'}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar cliente..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {clients.map(client => (
+                                  <CommandItem
+                                    key={client.id}
+                                    value={`${client.name} ${client.phone}`}
+                                    onSelect={() => {
+                                      setSelectedClient(client.id);
+                                      setClientPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4", selectedClient === client.id ? "opacity-100" : "opacity-0")} />
+                                    {client.name} - {client.phone}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Date and Time */}
